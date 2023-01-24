@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  mysql8-db:
+    image: mysql:8
+    container_name: mysql8_spring
+    restart: always
+    environment:
+      MYSQL_DATABASE: fundamentos
+      MYSQL_USER: sa
+      MYSQL_PASSWORD: sa1234
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    ports:
+      - "3300:3306"
+    networks:
+      - spring-network
+
+networks:
+  spring-network:
+    driver: bridge
