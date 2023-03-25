@@ -4,6 +4,9 @@ package com.fundamentos.springboot.fundamentos.entity;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 
 @Entity
 @Table(name="clientes")
@@ -12,9 +15,16 @@ public class Cliente implements Serializable {
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
     
+    @NotEmpty(message = "No puede estar vacío")
+    @Size(min=4, max=12, message = "El tamaño tiene que estar entre 4 y 12")
     @Column(nullable=false)
     private String name;
+    
+    @NotEmpty(message = "No puede estar vacío")
     private String last_name;
+    
+    @NotEmpty(message = "No puede estar vacío")
+    @Email(message = "No es una dirección de correo válido")
     @Column(nullable=false, unique=true)
     private String email;
     @Column(name="created_at")
