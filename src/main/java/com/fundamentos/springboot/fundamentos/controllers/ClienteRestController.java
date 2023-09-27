@@ -4,6 +4,7 @@ import com.fundamentos.springboot.fundamentos.entity.Cliente;
 import com.fundamentos.springboot.fundamentos.services.IClienteService;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,10 +23,13 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import org.hibernate.annotations.common.util.impl.Log_$logger;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -178,7 +182,7 @@ public class ClienteRestController {
         Cliente cliente = clienteService.findById(id);
         
         if (!file.isEmpty()) {
-            String fileName = UUID.randomUUID().toString().concat("_").concat(file.getOriginalFilename());
+            String fileName = UUID.randomUUID().toString().concat("_").concat(file.getOriginalFilename().replace(" ", ""));
             Path filePath = Paths.get("uploads").resolve(fileName).toAbsolutePath();
             
             try {
@@ -207,5 +211,29 @@ public class ClienteRestController {
         }
         
         return new ResponseEntity<Map<String,Object>>(response, HttpStatus.OK);
+    }
+    
+    
+    @GetMapping("/uploads/img/{namePhoto:.+}")
+    public ResponseEntity<Resource> seePhoto(@PathVariable String namePhoto){
+        
+        Path filePath = Paths.get("uploads").resolve(namePhoto).toAbsolutePath();
+        
+        Resource resource = null;
+        
+        try {
+            resource = new UrlResource(filePath.toUri());
+        } catch (MalformedURLException ex) {
+            ex.printStackTrace();
+        }
+        
+        if (!resource.exists() && !resource.isReadable()) {
+            throw new RuntimeException("Error no se pudo cargar la imagen: "+ namePhoto);
+        }
+        
+        HttpHeaders header = new HttpHeaders();
+        header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() +"\"");
+                       
+        return new ResponseEntity<Resource>((Resource) resource, header, HttpStatus.OK);
     }
 }
