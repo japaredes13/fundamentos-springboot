@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.Date;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 @Entity
@@ -25,17 +26,16 @@ public class Cliente implements Serializable {
     
     @NotEmpty(message = "No puede estar vacío")
     @Email(message = "No es una dirección de correo válido")
-    @Column(nullable=false, unique=true)
+    @Column(nullable=false, unique=false)
     private String email;
+    
+    @NotNull(message = "No puede estar vacío")
     @Column(name="created_at")
     @Temporal(TemporalType.DATE)
     private Date createdAt;
 
-    @PrePersist
-    public void PrePersist() {
-        createdAt = new Date();
-    }
-
+    private String photo;
+    
     public Long getId() {
         return id;
     }
@@ -74,6 +74,14 @@ public class Cliente implements Serializable {
 
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
+    }
+    
+    public String getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(String photo) {
+        this.photo = photo;
     }
 
     private static final long serialVersionUID = 864214680062510077L;

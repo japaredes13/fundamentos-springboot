@@ -2,6 +2,11 @@ package com.fundamentos.springboot.fundamentos.controllers;
 
 import com.fundamentos.springboot.fundamentos.entity.Cliente;
 import com.fundamentos.springboot.fundamentos.services.IClienteService;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,13 +16,20 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import org.hibernate.annotations.common.util.impl.Log_$logger;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.multipart.MultipartFile;
 
 @CrossOrigin(origins={"http://localhost:4200"})
 @RestController
@@ -30,6 +42,14 @@ public class ClienteRestController {
     public List<Cliente> index(){
         return clienteService.findAll();
     }
+    
+    
+    @GetMapping("/clientes/page/{page}")
+    public Page<Cliente> index(@PathVariable Integer page){
+        Pageable pageable = PageRequest.of(page, 4);
+        return clienteService.findAll(pageable);
+    }
+    
 
     @GetMapping("/clientes/{id}")
     public ResponseEntity<?> show(@PathVariable Long id){
@@ -126,13 +146,65 @@ public class ClienteRestController {
     public ResponseEntity<?> delete(@PathVariable Long id){
         Map<String, Object> response = new HashMap<>();
         try {
+            
+            Cliente cliente = clienteService.findById(id);
+            
+            String lastNamePhoto = cliente.getPhoto();
+            if (lastNamePhoto != null && lastNamePhoto.length() > 0) {
+                Path lastPathPhoto = Paths.get("uploads").resolve(lastNamePhoto).toAbsolutePath();
+                File lastFilePhoto = lastPathPhoto.toFile();
+                if (lastFilePhoto.exists() && lastFilePhoto.canRead()){
+                    lastFilePhoto.delete();
+                }
+            }
+            
             clienteService.delete(id);
         } catch (DataAccessException e) {
             response.put("message", "Error al eliminar el cliente!");
             response.put("error", e.getMessage().concat(": ").concat(e.getMostSpecificCause().getMessage()));
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         } 
-        response.put("mensaje", "El cliente se ha eliminado con éxito!");
+        response.put("message", "El cliente se ha eliminado con éxito!");
+        
+        return new ResponseEntity<Map<String,Object>>(response, HttpStatus.OK);
+    }
+    
+    
+    @PostMapping("/clientes/upload")
+    public ResponseEntity<?> upload(@RequestParam("file") MultipartFile file, 
+            @RequestParam("id") Long id){
+        Map<String, Object> response = new HashMap<>();
+        
+        Cliente cliente = clienteService.findById(id);
+        
+        if (!file.isEmpty()) {
+            String fileName = UUID.randomUUID().toString().concat("_").concat(file.getOriginalFilename());
+            Path filePath = Paths.get("uploads").resolve(fileName).toAbsolutePath();
+            
+            try {
+                Files.copy(file.getInputStream(), filePath);
+            } catch (IOException ex) {
+                response.put("message", "Error al subir la imagen:  " + fileName);
+                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+
+            }
+            
+            String lastNamePhoto = cliente.getPhoto();
+            if (lastNamePhoto != null && lastNamePhoto.length() > 0) {
+                Path lastPathPhoto = Paths.get("uploads").resolve(lastNamePhoto).toAbsolutePath();
+                File lastFilePhoto = lastPathPhoto.toFile();
+                if (lastFilePhoto.exists() && lastFilePhoto.canRead()){
+                    lastFilePhoto.delete();
+                }
+            }
+            
+            cliente.setPhoto(fileName);
+            clienteService.save(cliente);
+            
+            response.put("cliente", cliente);
+            response.put("message", "Has subido correctamente la imagen: " + fileName);
+
+        }
         
         return new ResponseEntity<Map<String,Object>>(response, HttpStatus.OK);
     }
