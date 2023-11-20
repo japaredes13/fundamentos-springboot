@@ -34,3 +34,5 @@ build/
 
 ### DOCKER ###
 mysql-data
+
+uploads

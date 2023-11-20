@@ -8,21 +8,19 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
-import org.hibernate.annotations.common.util.impl.Log_$logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.dao.DataAccessException;
@@ -32,7 +30,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.multipart.MultipartFile;
 
 @CrossOrigin(origins={"http://localhost:4200"})
@@ -42,6 +39,8 @@ public class ClienteRestController {
     @Autowired
     private IClienteService clienteService;
 
+    private final Logger log = LoggerFactory.getLogger(ClienteRestController.class);
+    
     @GetMapping("/clientes")
     public List<Cliente> index(){
         return clienteService.findAll();
@@ -201,7 +200,7 @@ public class ClienteRestController {
                     lastFilePhoto.delete();
                 }
             }
-            
+            log.info("Se esta por cargar la imagen: " + fileName);
             cliente.setPhoto(fileName);
             clienteService.save(cliente);
             
@@ -228,12 +227,21 @@ public class ClienteRestController {
         }
         
         if (!resource.exists() && !resource.isReadable()) {
-            throw new RuntimeException("Error no se pudo cargar la imagen: "+ namePhoto);
+            filePath = Paths.get("src/main/resources/static/images").resolve("not-user.png").toAbsolutePath();
+            try {
+                resource = new UrlResource(filePath.toUri());
+            } catch (MalformedURLException ex) {
+                ex.printStackTrace();
+            }
+            log.error("Error no se pudo cargar la imagen: "+ namePhoto);
         }
+        
+        log.info("Se esta por descargar la imagen: " + namePhoto);
         
         HttpHeaders header = new HttpHeaders();
         header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() +"\"");
                        
         return new ResponseEntity<Resource>((Resource) resource, header, HttpStatus.OK);
     }
+    
 }
