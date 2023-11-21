@@ -2,6 +2,7 @@ package com.fundamentos.springboot.fundamentos.controllers;
 
 import com.fundamentos.springboot.fundamentos.entity.Cliente;
 import com.fundamentos.springboot.fundamentos.services.IClienteService;
+import com.fundamentos.springboot.fundamentos.services.IUploadFileService;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -39,6 +40,9 @@ public class ClienteRestController {
     @Autowired
     private IClienteService clienteService;
 
+    @Autowired
+    private IUploadFileService uploadFileService;
+    
     private final Logger log = LoggerFactory.getLogger(ClienteRestController.class);
     
     @GetMapping("/clientes")
@@ -181,25 +185,18 @@ public class ClienteRestController {
         Cliente cliente = clienteService.findById(id);
         
         if (!file.isEmpty()) {
-            String fileName = UUID.randomUUID().toString().concat("_").concat(file.getOriginalFilename().replace(" ", ""));
-            Path filePath = Paths.get("uploads").resolve(fileName).toAbsolutePath();
-            
+            String fileName = null;
             try {
-                Files.copy(file.getInputStream(), filePath);
+                fileName = uploadFileService.copy(file);
             } catch (IOException ex) {
-                response.put("message", "Error al subir la imagen:  " + fileName);
+                response.put("message", "Error al subir la imagen.");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
             
             String lastNamePhoto = cliente.getPhoto();
-            if (lastNamePhoto != null && lastNamePhoto.length() > 0) {
-                Path lastPathPhoto = Paths.get("uploads").resolve(lastNamePhoto).toAbsolutePath();
-                File lastFilePhoto = lastPathPhoto.toFile();
-                if (lastFilePhoto.exists() && lastFilePhoto.canRead()){
-                    lastFilePhoto.delete();
-                }
-            }
+            uploadFileService.delete(lastNamePhoto);
+
             log.info("Se esta por cargar la imagen: " + fileName);
             cliente.setPhoto(fileName);
             clienteService.save(cliente);
@@ -216,25 +213,14 @@ public class ClienteRestController {
     @GetMapping("/uploads/img/{namePhoto:.+}")
     public ResponseEntity<Resource> seePhoto(@PathVariable String namePhoto){
         
-        Path filePath = Paths.get("uploads").resolve(namePhoto).toAbsolutePath();
-        
         Resource resource = null;
         
         try {
-            resource = new UrlResource(filePath.toUri());
-        } catch (MalformedURLException ex) {
-            ex.printStackTrace();
-        }
-        
-        if (!resource.exists() && !resource.isReadable()) {
-            filePath = Paths.get("src/main/resources/static/images").resolve("not-user.png").toAbsolutePath();
-            try {
-                resource = new UrlResource(filePath.toUri());
-            } catch (MalformedURLException ex) {
-                ex.printStackTrace();
-            }
+            resource = uploadFileService.load(namePhoto);
+        } catch (MalformedURLException e) {
             log.error("Error no se pudo cargar la imagen: "+ namePhoto);
         }
+        
         
         log.info("Se esta por descargar la imagen: " + namePhoto);
         
