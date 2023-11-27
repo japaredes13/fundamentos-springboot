@@ -2,6 +2,7 @@ package com.fundamentos.springboot.fundamentos.services;
 
 import com.fundamentos.springboot.fundamentos.dao.IClienteDao;
 import com.fundamentos.springboot.fundamentos.entity.Cliente;
+import com.fundamentos.springboot.fundamentos.entity.Region;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,5 +45,11 @@ public class ClienteServiceImpl implements IClienteService{
     @Transactional
     public void delete(Long id) {
         clienteDao.deleteById(id);
+    }
+
+    @Override
+    @Transactional(readOnly=true)
+    public List<Region> findAllRegiones() {
+        return clienteDao.findAllRegiones();
     }
 }

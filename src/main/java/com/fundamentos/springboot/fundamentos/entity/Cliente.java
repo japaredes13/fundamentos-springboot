@@ -1,6 +1,7 @@
 package com.fundamentos.springboot.fundamentos.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
@@ -35,6 +36,12 @@ public class Cliente implements Serializable {
     private Date createdAt;
 
     private String photo;
+    
+    @NotNull(message = "La región no puede ser vacia")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="region_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Region region;
     
     public Long getId() {
         return id;
@@ -82,6 +89,14 @@ public class Cliente implements Serializable {
 
     public void setPhoto(String photo) {
         this.photo = photo;
+    }
+
+    public Region getRegion() {
+        return region;
+    }
+
+    public void setRegion(Region region) {
+        this.region = region;
     }
 
     private static final long serialVersionUID = 864214680062510077L;

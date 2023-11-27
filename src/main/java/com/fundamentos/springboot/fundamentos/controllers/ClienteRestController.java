@@ -1,6 +1,7 @@
 package com.fundamentos.springboot.fundamentos.controllers;
 
 import com.fundamentos.springboot.fundamentos.entity.Cliente;
+import com.fundamentos.springboot.fundamentos.entity.Region;
 import com.fundamentos.springboot.fundamentos.services.IClienteService;
 import com.fundamentos.springboot.fundamentos.services.IUploadFileService;
 import java.io.File;
@@ -137,6 +138,8 @@ public class ClienteRestController {
             clienteFind.setName(cliente.getName());
             clienteFind.setLast_name(cliente.getLast_name());
             clienteFind.setEmail(cliente.getEmail());
+            clienteFind.setCreatedAt(cliente.getCreatedAt());
+            clienteFind.setRegion(cliente.getRegion());
         } catch (DataAccessException e) {
             response.put("message", "Error al actualizar el cliente!");
             response.put("error", e.getMessage().concat(": ").concat(e.getMostSpecificCause().getMessage()));
@@ -157,13 +160,7 @@ public class ClienteRestController {
             Cliente cliente = clienteService.findById(id);
             
             String lastNamePhoto = cliente.getPhoto();
-            if (lastNamePhoto != null && lastNamePhoto.length() > 0) {
-                Path lastPathPhoto = Paths.get("uploads").resolve(lastNamePhoto).toAbsolutePath();
-                File lastFilePhoto = lastPathPhoto.toFile();
-                if (lastFilePhoto.exists() && lastFilePhoto.canRead()){
-                    lastFilePhoto.delete();
-                }
-            }
+            uploadFileService.delete(lastNamePhoto);
             
             clienteService.delete(id);
         } catch (DataAccessException e) {
@@ -230,4 +227,8 @@ public class ClienteRestController {
         return new ResponseEntity<Resource>((Resource) resource, header, HttpStatus.OK);
     }
     
+    @GetMapping("/clientes/regiones")
+    public List<Region> listarRegiones(){
+        return clienteService.findAllRegiones();
+    }
 }
