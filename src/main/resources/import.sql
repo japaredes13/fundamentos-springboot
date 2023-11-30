@@ -24,8 +24,8 @@ INSERT INTO clientes (region_id, name, last_name, email, created_at) VALUES(7, '
 
 
 /* tabla de usuarios */
-INSERT INTO usuarios (username, password, enabled) VALUES('javier','$2a$10$GhD36xoL8usybbXf9VdAouramjmr3cwTzDAwh4qh4SxG4bU/qK4de',1);
-INSERT INTO usuarios (username, password, enabled) VALUES('admin','$2a$10$bUZpLO2al2oW7u7YcGN2I.DNzr.QSIWuWd5B30WniNGFtnhcIeRa.',1);
+INSERT INTO usuarios (username, password, enabled, nombre, apellido, email) VALUES('javier','$2a$10$GhD36xoL8usybbXf9VdAouramjmr3cwTzDAwh4qh4SxG4bU/qK4de',1, 'Javier', 'Paredes', 'javiparedes160@gmail.com');
+INSERT INTO usuarios (username, password, enabled, nombre, apellido, email) VALUES('admin','$2a$10$bUZpLO2al2oW7u7YcGN2I.DNzr.QSIWuWd5B30WniNGFtnhcIeRa.',1, 'Andres', 'Gonzalez', 'agonzalez@gmail.com');
 
 INSERT INTO roles (nombre) VALUES('ROLE_USER');
 INSERT INTO roles (nombre) VALUES('ROLE_ADMIN');
